@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Ver Datos Protegido{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="alert alert-info text-center mb-4">
+                <strong>Acceso Protegido:</strong> Estos datos solo se muestran si tienes autenticación válida.
+            </div>
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    Datos del Usuario (Protegido)
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>ID:</strong> <span id="user-id">[ID]</span></li>
+                        <li class="list-group-item"><strong>Nombre:</strong> <span id="user-nombre">[Nombre]</span></li>
+                        <li class="list-group-item"><strong>Username:</strong> <span id="user-username">[Username]</span></li>
+                        <li class="list-group-item"><strong>Email:</strong> <span id="user-email">[Email]</span></li>
+                        <li class="list-group-item"><strong>Teléfono:</strong> <span id="user-telefono">[Teléfono]</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function getIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id');
+}
+
+function mostrarDatos(id, jwt) {
+    fetch(`/usuario-protegido/${id}`, {
+        headers: {
+            'Authorization': 'Bearer ' + jwt
+        }
+    })
+    .then(async res => {
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/sin-permiso';
+            return;
+        }
+        const data = await res.json();
+        if (data.error) {
+            document.getElementById('user-id').textContent = '[ID]';
+            document.getElementById('user-nombre').textContent = '[Nombre]';
+            document.getElementById('user-username').textContent = '[Username]';
+            document.getElementById('user-email').textContent = '[Email]';
+            document.getElementById('user-telefono').textContent = '[Teléfono]';
+        } else {
+            document.getElementById('user-id').textContent = data.id;
+            document.getElementById('user-nombre').textContent = data.nombre;
+            document.getElementById('user-username').textContent = data.username;
+            document.getElementById('user-email').textContent = data.email;
+            document.getElementById('user-telefono').textContent = data.telefono;
+        }
+    })
+    .catch(() => {
+        window.location.href = '/sin-permiso';
+    });
+}
+
+window.onload = function() {
+    const id = getIdFromUrl();
+    const jwt = localStorage.getItem('jwt');
+    if (id && jwt) {
+        mostrarDatos(id, jwt);
+    }
+};
+</script>
+{% endblock %}
